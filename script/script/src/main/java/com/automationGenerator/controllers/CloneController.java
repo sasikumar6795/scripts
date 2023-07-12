@@ -8,6 +8,7 @@ import org.apache.tomcat.util.http.fileupload.FileUtils;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -28,7 +29,8 @@ public class CloneController {
 
     @PostMapping
     public ResponseEntity<String> cloneRepo(@RequestBody GitRequest gitRequest) {
-        return cloneRepoService.cloneRepo(gitRequest);
+        boolean clonedRepos = cloneRepoService.cloneRepos(gitRequest);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
 
