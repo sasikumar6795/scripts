@@ -117,6 +117,7 @@ public class CloneRepoService {
         String line;
 
         Pattern mappingPattern = Pattern.compile("@(GetMapping|PostMapping|PutMapping|DeleteMapping)\\(\"(.*?)\"\\)");
+        //Pattern mappingPattern = Pattern.compile("@RequestMapping\\(value\\s*=\\s*\"(.*?)\",\\s*method\\s*=\\s*RequestMethod\\.(GET|POST|PUT|DELETE)\\)");
 
         while ((line = reader.readLine()) != null) {
             Matcher mappingMatcher = mappingPattern.matcher(line);
