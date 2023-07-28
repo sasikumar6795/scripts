@@ -1,5 +1,6 @@
 package com.automationGenerator.services;
 
+import com.automationGenerator.models.ApiData;
 import com.automationGenerator.models.GitRequest;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
@@ -116,8 +117,8 @@ public class CloneRepoService {
         BufferedReader reader = new BufferedReader(new FileReader(javaFile));
         String line;
 
-        Pattern mappingPattern = Pattern.compile("@(GetMapping|PostMapping|PutMapping|DeleteMapping)\\(\"(.*?)\"\\)");
-        //Pattern mappingPattern = Pattern.compile("@RequestMapping\\(value\\s*=\\s*\"(.*?)\",\\s*method\\s*=\\s*RequestMethod\\.(GET|POST|PUT|DELETE)\\)");
+        //Pattern mappingPattern = Pattern.compile("@(GetMapping|PostMapping|PutMapping|DeleteMapping)\\(\"(.*?)\"\\)");
+        Pattern mappingPattern = Pattern.compile("@RequestMapping\\(value\\s*=\\s*\"(.*?)\",\\s*method\\s*=\\s*RequestMethod\\.(GET|POST|PUT|DELETE)\\)");
 
         while ((line = reader.readLine()) != null) {
             Matcher mappingMatcher = mappingPattern.matcher(line);
@@ -131,6 +132,76 @@ public class CloneRepoService {
 
         reader.close();
     }
+
+    private static void extractApisFromFile(File javaFile, List<ApiData> apiDataList) throws IOException {
+        BufferedReader reader = new BufferedReader(new FileReader(javaFile));
+        String line;
+        String classMapping = "";
+
+        Pattern classPattern = Pattern.compile("@RestController.*");
+        Pattern methodMappingPattern = Pattern.compile("@RequestMapping\\(.*?\\)");
+        Pattern pathPattern = Pattern.compile("value\\s*=\\s*\\{\"(.*?)\"\\}");
+        Pattern requestParamPattern = Pattern.compile("@RequestParam\\(value\\s*=\\s*\"(.*?)\".*?\\)");
+
+        while ((line = reader.readLine()) != null) {
+            Matcher classMatcher = classPattern.matcher(line);
+            Matcher methodMappingMatcher = methodMappingPattern.matcher(line);
+
+            if (classMatcher.find()) {
+                classMapping = extractMapping(classMatcher.group());
+            }
+
+            if (methodMappingMatcher.find()) {
+                String methodMapping = methodMappingMatcher.group();
+                String httpMethod = extractHttpMethod(methodMapping);
+                String path = extractPath(classMapping, methodMapping);
+                List<String> requestParams = extractRequestParams(requestParamPattern, methodMapping);
+
+                if (!httpMethod.isEmpty() && !path.isEmpty()) {
+                    apiDataList.add(new ApiData(path, httpMethod, requestParams));
+                }
+            }
+        }
+
+        reader.close();
+    }
+
+    private static String extractMapping(String classMapping) {
+        Pattern pattern = Pattern.compile("@RequestMapping\\(\"(.*?)\"\\)");
+        Matcher matcher = pattern.matcher(classMapping);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        return "";
+    }
+
+    private static String extractHttpMethod(String methodMapping) {
+        Pattern pattern = Pattern.compile("method\\s*=\\s*\\{RequestMethod\\.(.*?)\\}");
+        Matcher matcher = pattern.matcher(methodMapping);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        return "";
+    }
+
+    private static String extractPath(String classMapping, String methodMapping) {
+        Pattern pattern = Pattern.compile("value\\s*=\\s*\\{\"(.*?)\"\\}");
+        Matcher matcher = pattern.matcher(classMapping + methodMapping);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        return "";
+    }
+
+    private static List<String> extractRequestParams(Pattern requestParamPattern, String methodMapping) {
+        List<String> requestParams = new ArrayList<>();
+        Matcher matcher = requestParamPattern.matcher(methodMapping);
+        while (matcher.find()) {
+            requestParams.add(matcher.group(1));
+        }
+        return requestParams;
+    }
+
 
     private static void verifyApiResponse(String apiPath) {
         Response response = get("http://localhost:8080" + apiPath);
