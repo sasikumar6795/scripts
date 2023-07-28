@@ -1,0 +1,11 @@
+@RequestMapping(value="/eventfactory", method=RequestMethod.GET)
+	public ResponseEntity<List<String>> eventfactory(@RequestParam(value="EventType", required=true) String eventType,
+            @RequestParam(value="NumberToGenerate", required = true) Integer numberToGenerate,
+            @RequestParam(value="Email", required = true) String emailAddress,
+            @RequestParam(value="IsTraining", required = true) boolean isTraining,
+            @RequestParam(value="Office", required = false, defaultValue = "") String officeNumber,
+            @RequestParam(value="PolicyNumber", required = false, defaultValue = "") String policyNumber,
+            @RequestParam(value="EffectiveDate", required = false, defaultValue = "") String effectiveDate,
+            @RequestParam(value="DOL", required = false, defaultValue = "") String dol,
+            @RequestParam(value="ReportDate", required = false, defaultValue = "") String reportDate,
+			@RequestParam(value ="IsStatic", required=false, defaultValue = "false") String isStatic) {
